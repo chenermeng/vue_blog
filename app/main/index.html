@@ -1,0 +1,350 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="陈蒙的个人博客，是专注于分享web前端开发技术、前端开发基础教程的个人原创博客。"/>
+    <meta name="keywords" content="陈蒙,前端开发,前端博客,前端技术,web前端开发博客,轩枫,cm0818,chenmeng"/>
+    <link href="./public/img/favicon.ico" rel="icon" type="image/x-icon" />
+    <title>陈蒙 – 前端开发 | web前端技术博客</title>
+    <style>
+        [v-cloak] {
+            display: none
+        }
+    </style>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/public/css/index.css">
+</head>
+<body>
+<div id="app">
+    <div class="bgColor">
+        <nav class="nav navbar-inverse" style="margin-bottom: 15px;">
+            <div class="container-fluid">
+                <div class=" text-center clearfix" style="margin:0 10%;line-height:50px;">
+                    <ul class="nav navbar-nav ">
+                        <li>
+                            <router-link to="/">首页</router-link>
+                        </li>
+                        <li>
+                            <router-link to="/articleList">文章</router-link>
+                        </li>
+                        <li>
+                            <router-link to="/about">关于</router-link>
+                        </li>
+                        <li>
+                            <router-link to="/about">留言</router-link>
+                        </li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right" v-cloak>
+                        <li><a href="javascript:;">{{username?username:'游客'}}，您好</a></li>
+                        <li v-if="!flag">
+                            <router-link to="/user/register">注册</router-link>
+                        </li>
+                        <li>
+                            <router-link to="/user/login" v-if="!flag">登录</router-link>
+                        </li>
+                        <li v-if="flag"><a href="/admin">管理</a></li>
+                        <li><a href="javascript:;" v-if="flag" @click="logoutUser">退出</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <router-view></router-view>
+    </div>
+</div>
+
+
+<!--首页-->
+<script type="text/x-template" id="index">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-3">
+
+                <div class="panel panel-default">
+                    <div class="panel-heading text-center">
+                        搜索
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <input type="search" class="form-control" @keyup.enter="search" v-model="keyword">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-heading text-center">
+                        分类
+                    </div>
+                    <div class="panel-body">
+                        <div class="text-info text-center label label-success" v-for="(key,category) in categoryObj"
+                             trackBy="category">{{category}}({{key}})
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading text-center">
+                        阅读排行
+                    </div>
+                    <div class="panel-body">
+                        <p v-for="readInfo in readRanking">
+                            <router-link :to="{name:'articleDetail',params:{aid:readInfo.id}}" :key="readInfo.id">
+                                {{readInfo.title}}({{readInfo.views}})
+                            </router-link>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-9">
+                <div class="panel panel-default" v-for="article in articleList">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <strong>
+                                <router-link :to="{ name: 'articleDetail', params: { aid: article._id }}">
+                                    {{article.title}}
+                                </router-link>
+                            </strong>
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="text-info">{{article.summary}}</div>
+                    </div>
+                    <div class="panel-footer clearfix">
+                        <span class="pull-left text-danger">{{article.category}}</span>
+                        <span class="pull-right  col-xs-offset-1" v-format>{{article.addTime}}</span>
+                        <span class="pull-right col-xs-offset-1 ">评论数：{{article.comments.length}}</span>
+                        <span class="pull-right ">阅读量：{{article.views}}</span>
+                    </div>
+                </div>
+                <page @getNewData="subData" :current="page.current" :total="page.total"
+                      :pageSize="page.pageSize"></page>
+            </div>
+        </div>
+
+    </div>
+</script>
+
+<!--文章列表页-->
+<script type="text/x-template" id="acticleList">
+    <div class="container-fluid">
+        <div class="col-sm-10 col-sm-offset-1">
+            <div class="panel panel-default" v-for="article in articleList">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <router-link :to="{ name: 'articleDetail', params: { aid: article._id }}">
+                            {{article.title}}
+                        </router-link>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="text-info" >{{article.summary}}</div>
+                </div>
+                <div class="panel-footer clearfix">
+                    <span class="pull-left  text-danger">{{article.category}}</span>
+                    <span class="pull-right  col-xs-offset-1" v-format>{{article.addTime}}</span>
+                    <span class="pull-right col-xs-offset-1 ">评论数：{{article.comments.length}}</span>
+                    <span class="pull-right ">阅读量：{{article.views}}</span>
+                </div>
+            </div>
+            <page @getNewData="subData" :current="page.current" :total="page.total" :pageSize="page.pageSize"></page>
+        </div>
+    </div>
+
+</script>
+<!--文章详情-->
+<script type="text/x-template" id="articleDetail">
+    <div class="col-sm-10 col-sm-offset-1">
+        <div class="panel panel-success">
+            <div class="panel-heading text-center">
+                <h2 class="panel-title h1">
+                    <div class="text-info">{{articleObject.title}}</div>
+                </h2>
+            </div>
+            <div class="panel-body">
+                <div class="text-info" v-html="articleObject.content"></div>
+            </div>
+        </div>
+        <div class="panel-footer clearfix">
+            <span class="pull-right  col-xs-offset-1">发表时间：{{articleObject.addTime}}</span>
+
+            <span class="pull-right ">阅读量：{{articleObject.views}}</span>
+        </div>
+
+        <!--评论-->
+        <div class="list-group clearfix" style="margin:20px 0px;">
+            <div class="col-sm-2 text-center">
+                <p v-if="!username">评论请先登录</p>
+                <div v-if="username">
+                    <p>{{username}}</p>
+                    <img class="" src="./public/img/default_avatar.jpg" style="width: 48px; height: 48px;">
+                </div>
+            </div>
+            <div class="col-sm-10">
+                <div v-if="!username">
+                    <router-link class="pull-right btn btn-sm btn-success" to="/user/login" style="margin-left:10px;">
+                        登录
+                    </router-link>
+                    <router-link class="pull-right btn btn-sm btn-primary" to="/user/register">注册</router-link>
+                </div>
+                <textarea class="form-control" rows="4" placeholder="来发表下你的看法把" v-model="comment"></textarea>
+                <span v-show="reviewer.flag" class="text-danger"
+                      style="display:inline-block;margin:10px 15px;">评论内容不能为空</span>
+                <button class="pull-right btn btn-success" style="margin:10px 15px;" @click="submitViews">评论</button>
+                <button class="pull-right btn btn-info" style="margin:10px 0;" @click="cancel">取消</button>
+
+            </div>
+        </div>
+
+        <div class="list-group">
+            <div class="panel list-group-item" style="margin-bottom:0;">
+                <div class="panel-heading clearfix">
+                    {{articleObject.comments&&articleObject.comments.length}}条评论
+                    <span class="pull-right" style="margin-left:20px;">按时间倒序</span>
+                    <span class="pull-right">按时间正序</span>
+                </div>
+            </div>
+        </div>
+
+        <!--评论列表-->
+        <div class="panel list-group-item" v-for="(val,index) in reviews">
+            <div class="media panel-heading">
+                <div class="media-left">
+                    <a href="javascript:;">
+                        <img src="./public/img/default_avatar.jpg" style="width: 48px; height: 48px;">
+                    </a>
+                </div>
+                <div class="media-body">
+                    <h4 class="media-heading">{{val.username}}</h4>
+                    <span>{{(page.current-1)*page.pageSize+index+1}}楼</span><span
+                        style="margin-left:20px;">{{val.date}}</span>
+                </div>
+            </div>
+            <div class="panel-body">
+                {{val.comment}}
+            </div>
+            <!-- <div class="panel-body">
+                 <span class=" glyphicon glyphicon-thumbs-up">100人觉得很赞</span>-->
+            <!--<span class="glyphicon glyphicon-comment" style="margin-left:20px;">回复</span>-->
+        </div>
+
+        <page @getNewData="subData" :current="page.current" :total="page.total" :pageSize="page.pageSize"></page>
+    </div>
+
+    </div>
+</script>
+<!--注册-->
+<script type="text/x-template" id="register">
+    <div class="container">
+        <div id="formSubmit" class="form-horizontal">
+            <div class="form-group has-feedback">
+                <label class="col-sm-2 control-label">用户名</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" placeholder="用户名" autocomplete="false" name="username"
+                           v-model="username" autocomplete="off" title="数字和字母组成,开头必须是字母,4-16位">
+                    <span class="glyphicon  form-control-feedback"
+                          :class="checkUserName?'glyphicon-ok text-success':'glyphicon-remove text-danger'"></span>
+                </div>
+            </div>
+            <div class="form-group has-feedback">
+                <label class="col-sm-2 control-label">密码</label>
+                <div class="col-sm-10">
+                    <input type="password" class="form-control" placeholder="密码" name="password" v-model="password"
+                           autocomplete="off" title="数字和字母组成,开头必须是字母,6-16位">
+                    <span class="glyphicon form-control-feedback"
+                          :class="checkPassword?'glyphicon-ok text-success':'glyphicon-remove text-danger'"></span>
+                </div>
+            </div>
+            <!--<div class="form-group">
+                <label class="col-sm-2 control-label">头像</label>
+                <div class="col-sm-10">
+                    <div class="weui-uploader__input-box">
+                        <input class="weui-uploader__input" type="file" accept="image/*" multiple="" @change="onFileChange" name="avatar">
+                    </div>
+                    <div class="avatar_preview">
+                        <img :src="avatar" alt="">
+                    </div>
+                </div>
+            </div>-->
+            <div class="form-group" v-if="errInfo">
+                <laber class="col-sm-2 control-label">警告</laber>
+                <div class="col-sm-10">
+                    <div class="alert alert-warning" role="alert">{{errInfo}}</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button :disabled="!checkUserName||!checkPassword" class="btn btn-primary" @click="registerSubmit">
+                        注册
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+<!--登陆-->
+<script type="text/x-template" id="login">
+    <div class="container">
+        <form class="form-horizontal">
+            <div class="form-group has-feedback">
+                <label class="col-sm-2 control-label">用户名</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" placeholder="用户名" autocomplete="false"
+                           v-model="user.username" autocomplete="off" title="数字和字母组成,开头必须是字母,4-16位">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">密码</label>
+                <div class="col-sm-10">
+                    <input type="password" class="form-control" placeholder="密码" title="数字和字母组成,开头必须是字母,6-16位"
+                           v-model="user.password" autocomplete="off">
+                </div>
+            </div>
+            <!-- <div class="form-group">
+                 <div class="col-sm-offset-2 col-sm-10">
+                     <div class="checkbox">
+                         <label>
+                             <input type="checkbox"> 自动登陆
+                         </label>
+                     </div>
+                 </div>
+             </div>-->
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <a class="btn btn-success" @click="loginSubmit">登录</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</script>
+
+<!--分页模板-->
+<script type="text/x-template" id="pageTmpl">
+    <nav>
+        <ul class="pager">
+            <li class="previous" v-if="sonCurrent>1"><a href="javascript:;" @click="sonCurrent--&&emitDate()">← 上一页</a>
+            </li>
+            <li>
+                每页显示 {{sonPageSize}} 条数据，一共 {{sonTotal}}页，当前第 {{sonCurrent}} 页
+            </li>
+            <li class="next" v-if="sonCurrent<sonTotal"><a href="javascript:;" @click="sonCurrent++&&emitDate()">下一页
+                →</a></li>
+        </ul>
+    </nav>
+</script>
+<script type="text/x-template" id="about">
+    <div>
+        暂无
+    </div>
+</script>
+
+<script src="/node_modules/jquery/dist/jquery.min.js"></script>
+<script src="/node_modules/marked/lib/marked.js"></script>
+<script src="/public/js/highlight.js"></script>
+<script src="/node_modules/vue/dist/vue.min.js"></script>
+<script src="/node_modules/vue-router/dist/vue-router.min.js"></script>
+<script src="/public/js/index.js"></script>
+</body>
+</html>                       
+                
+     

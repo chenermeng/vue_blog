@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>后台管理系统</title>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="/node_modules/simplemde/dist/simplemde.min.css">
+    <style>
+        .pagination > li > a.active {
+            z-index: 3;
+            color: #fff;
+            cursor: default;
+            background-color: #337ab7;
+            border-color: #337ab7;
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <nav class="navbar navbar-default" v-cloak>
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <router-link class="navbar-brand" to="/">后台管理</router-link>
+            </div>
+
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <router-link to="userEdit"> 用户管理</router-link>
+                    </li>
+                    <li class="dropdown">
+                        <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown">文章管理 <span
+                                class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <router-link to="/article" class="">文章首页</router-link>
+                            </li>
+                            <li>
+                                <router-link to="/articleAdd" class="">文章添加</router-link>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{user}} <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="javascript:;"  @click="logout">退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <ol class="breadcrumb">
+        <li><a href="/">返回首页</a></li>
+    </ol>
+    <router-view></router-view>
+</div>
+
+<!--后台首页-->
+<script id="adminIdex" type="text/x-template">
+    <div>
+        <div class="jumbotron">
+            <h1>Hello!</h1>
+            <p>欢迎进入我的博客后台管理！</p>
+        </div>
+    </div>
+</script>
+
+<!--用户编辑-->
+<script type="text/x-template" id="userEdit">
+    <div class="container-fluid">
+        <table class="table table-hover table-striped text-center">
+            <tbody>
+            <tr class="text-center">
+                <th class="text-center">ID</th>
+                <th class="text-center">用户</th>
+                <th class="text-center">是否是管理员</th>
+                <th class="text-center">操作</th>
+            </tr>
+            <tr v-for="user in userList">
+                <td>{{user.id}}</td>
+                <td>{{user.username}}</td>
+                <td>{{user.isAdmin?'是':'否'}}</td>
+                <td>
+                    <a class="btn btn-danger" href="javascript:;" @click="removeUser(user.id,user.isAdmin)">删除用户</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <page @getNewData="subData" :current="page.current" :total="page.total" :pageSize="page.pageSize"></page>
+        <!--  <nav>
+              <ul class="pager">
+                  <li class="previous" v-if="page.current>1"><a href="javascript:;" @click="page.current&#45;&#45;&&getData()">← 上一页</a></li>
+                  <li>
+                      每页显示 {{page.pageSize}} 条数据，一共 {{page.total}}页，当前第 {{page.current}} 页
+                  </li>
+                  <li class="next" v-if="page.current<page.total"><a href="javascript:;" @click="page.current++&&getData()">下一页 →</a></li>
+              </ul>
+          </nav>-->
+    </div>
+</script>
+
+<!--分页模板-->
+<script type="text/x-template" id="pageTmpl">
+    <nav>
+        <ul class="pager">
+            <li class="previous" v-if="sonCurrent>1"><a href="javascript:;" @click="sonCurrent--&&emitDate()">← 上一页</a>
+            </li>
+            <li>
+                每页显示 {{sonPageSize}} 条数据，一共 {{sonTotal}}页，当前第 {{sonCurrent}} 页
+            </li>
+            <li class="next" v-if="sonCurrent<sonTotal"><a href="javascript:;" @click="sonCurrent++&&emitDate()">下一页
+                →</a></li>
+        </ul>
+    </nav>
+</script>
+<!--文章编辑-->
+<script type="text/x-template" id="articleEdit">
+    <div class=" col-sm-12">
+        <div class="form-group">
+            <label>标题</label>
+            <input class="form-control" placeholder="标题" v-model="article.title">
+        </div>
+        <div class="form-group">
+            <label>标题</label>
+            <input class="form-control" placeholder="简介(60字以内)" v-model="article.summary">
+        </div>
+        <textarea v-model="article.content"></textarea>
+        <div class="form-group">
+            <label>分类标签</label>
+            <input class="form-control" placeholder="分类标签" v-model="article.category">
+        </div>
+        <div class="form-group">
+            <button class="btn btn-success" @click="update">修改</button>
+            <router-link class="btn btn-primary" to="/article">取消</router-link>
+        </div>
+    </div>
+</script>
+<!--文章添加-->
+<script type="text/x-template" id="articleAdd">
+    <div class=" col-sm-12">
+        <div class="form-group">
+            <label>标题</label>
+            <input class="form-control" placeholder="标题" v-model="article.title">
+        </div>
+        <div class="form-group">
+            <label>标题</label>
+            <input class="form-control" placeholder="简介(60字以内)" v-model="article.summary">
+        </div>
+        <textarea v-model="article.content"></textarea>
+        <div class="form-group">
+            <label>分类标签</label>
+            <input class="form-control" placeholder="分类标签" v-model="article.category">
+        </div>
+        <div class="form-group">
+            <button class="btn btn-success" @click="publish">发布</button>
+        </div>
+    </div>
+</script>
+<!--文章首页-->
+<script type="text/x-template" id="article">
+    <div>
+        <table class="table table-hover table-striped text-center">
+            <tbody>
+            <tr>
+                <th class="text-center">标题</th>
+                <th class="text-center">分类名称</th>
+                <th class="text-center">作者</th>
+                <th class="text-center">添加时间</th>
+                <th class="text-center">操作</th>
+            </tr>
+            <tr v-for="article in articleList">
+                <td>{{article.title}}</td>
+                <td>{{article.category}}</td>
+                <td>{{article.author}}</td>
+                <td>{{article.addTime}}</td>
+                <td>
+                    <router-link :to="{name:'articleEdit',params:{aid:article.id}}" class="btn btn-warning">编辑
+                    </router-link>
+                    <button class="btn btn-danger" @click="removeArticle(article.id)">删除</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <page @getNewData="subData" :current="page.current" :total="page.total" :pageSize="page.pageSize"></page>
+    </div>
+</script>
+<!--<nav>
+    <ul class="pager">
+        <li class="previous"><a href="">← 上一页</a></li>
+
+        <li>
+            一共有 4 条数据，每页显示 10 条数据，一共 1 页，当前第 1 页
+        </li>
+
+        <li class="next"><a href="">下一页 →</a></li>
+    </ul>
+</nav>-->
+<!--
+
+<table class="table table-hover table-striped">
+
+    <tbody><tr>
+        <th>ID</th>
+        <th>分类名称</th>
+        <th>标题</th>
+        <th>作者</th>
+        <th>添加时间</th>
+        <th>阅读量</th>
+        <th>操作</th>
+    </tr>
+    <tr>
+        <td>5881b36dafc7f4101ea63fad</td>
+        <td></td>
+        <td>啊大大a</td>
+        <td>admin</td>
+        <td>2017年01月20日 14:49:27</td>
+        <td>0</td>
+        <td>
+            <a href="/admin/content/edit?id=5881b36dafc7f4101ea63fad">修改</a> |
+            <a href="/admin/content/delete?id=5881b36dafc7f4101ea63fad">删除</a>
+        </td>
+    </tr>
+    </tbody></table>
+-->
+<script src="/node_modules/simplemde/dist/simplemde.min.js"></script>
+<script src="/node_modules/marked/lib/marked.js"></script>
+<script src="/public/highlight.js"></script>
+<script src="/node_modules/jquery/dist/jquery.min.js"></script>
+<script src="/node_modules/bootstrap/js/dropdown.js"></script>
+<script src="/node_modules/vue/dist/vue.min.js"></script>
+<script src="/node_modules/vue-router/dist/vue-router.min.js"></script>
+<script src="/public/admin.js"></script>
+</body>
+</html>
