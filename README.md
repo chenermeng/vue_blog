@@ -1,6 +1,5 @@
 # vue_blog
 #### bootstrap + jq + vue2 + vue-router + express 
-#### 在线预览： http://cm0818.com
 #### git clone https://github.com/chenermeng/vue_blog.git
 #### cd vue_blog
 #### npm install
